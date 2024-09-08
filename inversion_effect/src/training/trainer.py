@@ -106,6 +106,7 @@ class Trainer(object):
 
 
     def train(self):
+        # Train loop
         for epoch in tqdm(range(self.num_epochs)):
             # train:
             print(f"Train epoch: {epoch}")
