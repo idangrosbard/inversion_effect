@@ -26,6 +26,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     train_loader = Factory.get_data_loader(Path(args.train_pth), args.batch_size, args.num_workers)
     val_loader = Factory.get_data_loader(Path(args.val_pth), args.batch_size, args.num_workers, train=False)
+    print(len(train_loader.dataset.classes))
     model = Factory.get_model(n_classes=len(train_loader.dataset.classes))
     model.to(device)
     optimizer = Factory.get_optimizer(model, args.lr)
@@ -33,7 +34,11 @@ def main():
     writer = Factory.get_writer(args.log_dir)
     criterion = Factory.get_criterion()
 
-    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq)
+    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes))
     trainer.train()
 
     torch.save(model.state_dict(), args.output_path)
+
+
+if __name__ == "__main__":
+    main()

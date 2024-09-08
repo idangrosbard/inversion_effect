@@ -11,7 +11,7 @@ class Factory(object):
         """
         Get the model.
         """
-        model = models.__dict__[model_arch](n_classes=n_classes)
+        model = models.__dict__[model_arch](num_classes=n_classes)
         return model
 
     def get_optimizer(model: nn.Module, lr: float) -> optim.Optimizer:

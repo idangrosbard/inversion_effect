@@ -23,13 +23,13 @@ class Trainer(object):
         self.model = kwargs.get("model", None)
         self.eval_freq = kwargs.get("eval_freq", None)
 
-        self.upright_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None))
-        self.inverted_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None))
-        self.acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None))
-        self.epoch_loss = MeanMetric()
-        self.epoch_acc = MeanMetric()
-        self.epoch_upright_acc = MeanMetric()
-        self.epoch_inverted_acc = MeanMetric()
+        self.upright_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None)).to(self.device)
+        self.inverted_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None)).to(self.device)
+        self.acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None)).to(self.device)
+        self.epoch_loss = MeanMetric().to(self.device)
+        self.epoch_acc = MeanMetric().to(self.device)
+        self.epoch_upright_acc = MeanMetric().to(self.device)
+        self.epoch_inverted_acc = MeanMetric().to(self.device)
         self.total_steps = 0
         
 
@@ -37,7 +37,7 @@ class Trainer(object):
     def _batch(self, x: Tensor, y: Tensor, is_inverted: Tensor, train: bool) -> Tuple:
         if train:
             self.optimizer.zero_grad()
-        x, y = x.to(self.device), y.to(self.device), is_inverted.to(self.device)
+        x, y, is_inverted = x.to(self.device), y.to(self.device), is_inverted.to(self.device)
         y_hat = self.model(x)
         loss = self.criterion(y_hat, y)
         if train:
@@ -49,9 +49,9 @@ class Trainer(object):
         batch_acc = self.acc(y_hat, y)
 
         # named tuple
-        BatchOutput = namedtuple("BatchOutput", [("loss", float), ("batch_up_acc", float), ("batch_inv_acc", float), ("batch_total_acc", float)])
+        BatchOutput = namedtuple("BatchOutput", ["loss", "batch_up_acc", "batch_inv_acc", "batch_total_acc"])
 
-        output = BatchOutput(loss.item(), batch_up_acc.item(), batch_inv_acc.item(), batch_acc.item())
+        output = BatchOutput(float(loss.item()), batch_up_acc.item(), batch_inv_acc.item(), batch_acc.item())
 
         return output
     
@@ -102,11 +102,11 @@ class Trainer(object):
 
             self._log_batch_metrics(train, output, n, n_upright, n_inverted)
 
-            self.step += 1
+            self.total_steps += 1
 
 
     def train(self):
-        for epoch in range(self.num_epochs):
+        for epoch in tqdm(range(self.num_epochs)):
             # train:
             print(f"Train epoch: {epoch}")
             self.model.train()
