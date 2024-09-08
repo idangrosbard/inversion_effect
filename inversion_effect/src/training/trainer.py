@@ -106,12 +106,13 @@ class Trainer(object):
 
 
     def train(self):
+        # Train loop
         for epoch in tqdm(range(self.num_epochs)):
             # train:
             print(f"Train epoch: {epoch}")
             self.model.train()
             self._epoch(train=True)
-            self._log_epoch_metrics(train=True)
+            self._log_epoch_metrics(train=True, epoch=epoch)
 
             # eval:
             if self.eval_freq and epoch % self.eval_freq == 0:
