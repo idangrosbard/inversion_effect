@@ -33,8 +33,7 @@ def main():
     writer = Factory.get_writer(args.log_dir)
     criterion = Factory.get_criterion()
 
-    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_epochs=args.num_epochs)
+    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq)
     trainer.train()
 
     torch.save(model.state_dict(), args.output_path)
-    

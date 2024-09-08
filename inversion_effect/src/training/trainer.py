@@ -4,8 +4,10 @@ from torch.optim import optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from typing import Tuple, List, namedtuple
+from typing import Tuple, List
+from collections import namedtuple
 from torchmetrics import Accuracy, MeanMetric
+from tqdm import tqdm
 
 
 class Trainer(object):
@@ -32,7 +34,7 @@ class Trainer(object):
         
 
 
-    def _batch(self, x: Tensor, y: Tensor, is_inverted: Tensor, train: bool):
+    def _batch(self, x: Tensor, y: Tensor, is_inverted: Tensor, train: bool) -> Tuple:
         if train:
             self.optimizer.zero_grad()
         x, y = x.to(self.device), y.to(self.device), is_inverted.to(self.device)
@@ -91,7 +93,7 @@ class Trainer(object):
             self.model.eval()
             loader = self.val_loader
 
-        for x, y, is_inverted in loader:
+        for x, y, is_inverted in tqdm(loader):
             
             n = x.size(0)
             n_upright = torch.sum(1 - is_inverted).item()
@@ -106,6 +108,7 @@ class Trainer(object):
     def train(self):
         for epoch in range(self.num_epochs):
             # train:
+            print(f"Train epoch: {epoch}")
             self.model.train()
             self._epoch(train=True)
             self._log_epoch_metrics(train=True)
@@ -113,12 +116,14 @@ class Trainer(object):
             # eval:
             if self.eval_freq and epoch % self.eval_freq == 0:
                 with torch.no_grad():
+                    print(f"Eval epoch: {epoch}")
                     self.model.eval()
                     self._epoch(train=False)
                     self._log_epoch_metrics(train=False, epoch=epoch)
                     self.writer.flush()
 
         with torch.no_grad():
+            print(f"Test epoch:")
             self.model.eval()
             self._epoch(train=False)
             self._log_epoch_metrics(train=False, epoch=epoch)
