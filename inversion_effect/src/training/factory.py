@@ -21,7 +21,7 @@ class Factory(object):
         """
         return optim.AdamW(model.parameters(), lr=lr)
 
-    def get_scheduler(optimizer: optim.Optimizer, num_epochs: int, train_loader: DataLoader, max_lr: float = 0.01) -> optim.lr_scheduler._LRScheduler:
+    def get_scheduler(optimizer: optim.Optimizer, num_epochs: int, train_loader: DataLoader, max_lr: float = 0.001) -> optim.lr_scheduler._LRScheduler:
         """
         Get the scheduler.
         """
@@ -48,7 +48,6 @@ class Factory(object):
                 transforms.Resize((224, 224)),
                 transforms.RandomCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(p=flip_prob),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
         else:
@@ -56,12 +55,11 @@ class Factory(object):
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(p=flip_prob),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
         ds = InversionDataset(
             root=train_pth, 
-            transform=tt)
+            transform=tt, should_invert_distr=distributions.Bernoulli(flip_prob))
         
         return DataLoader(ds, batch_size=batch_size, shuffle=train, num_workers=num_workers)

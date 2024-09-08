@@ -44,6 +44,7 @@ class Trainer(object):
             loss.backward()
             self.optimizer.step()
             self.scheduler.step()
+            self.writer.add_scalar("train/lr", self.optimizer.param_groups[0]["lr"], self.total_steps)
         batch_up_acc = self.upright_acc(y_hat[(1 - is_inverted) == 1, :], y[(1 - is_inverted) == 1])
         batch_inv_acc = self.inverted_acc(y_hat[(is_inverted == 1), :], y[is_inverted == 1])
         batch_acc = self.acc(y_hat, y)
