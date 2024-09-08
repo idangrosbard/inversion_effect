@@ -1,9 +1,9 @@
 from torch import nn, optim, distributions
 from torch.utils.data import DataLoader
+from torchvision.datasets import ImageFolder
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import models, transforms
 from pathlib import Path
-from .inversion_dataset import InversionDataset
 
 
 class Factory(object):
@@ -38,7 +38,7 @@ class Factory(object):
         """
         return nn.CrossEntropyLoss()
     
-    def get_data_loader(train_pth: Path, batch_size: int, num_workers: int = 4, train: bool = True) -> DataLoader:
+    def get_data_loader(train_pth: Path, batch_size: int, flip_prob = 0.5, num_workers: int = 4, train: bool = True) -> DataLoader:
         """
         Get the train/test loader.
         """
@@ -47,6 +47,7 @@ class Factory(object):
                 transforms.Resize((224, 224)),
                 transforms.RandomCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(p=flip_prob),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
         else:
@@ -54,12 +55,12 @@ class Factory(object):
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(p=flip_prob),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
-        train_ds = InversionDataset(
+        ds = ImageFolder(
             root=train_pth, 
-            transform=tt,
-            should_invert_distr=distributions.Bernoulli(0.5))
+            transform=tt)
         
-        return DataLoader(train_ds, batch_size=batch_size, shuffle=train, num_workers=num_workers)
+        return DataLoader(ds, batch_size=batch_size, shuffle=train, num_workers=num_workers)
