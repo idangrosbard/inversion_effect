@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import models, transforms
+from .inversion_dataset import InversionDataset
 from pathlib import Path
 
 
@@ -59,7 +60,7 @@ class Factory(object):
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
-        ds = ImageFolder(
+        ds = InversionDataset(
             root=train_pth, 
             transform=tt)
         
