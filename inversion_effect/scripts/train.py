@@ -14,17 +14,19 @@ def main():
     parser.add_argument("--train_pth", type=Path)
     parser.add_argument("--val_pth", type=Path)
     parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--inversion_pr", type=float, default=0.5)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--lr", type=float, default=0.0001)
     parser.add_argument("--num_epochs", type=int, default=100)
     parser.add_argument("--log_dir", type=Path, default="./logs")
     parser.add_argument("--eval_freq", type=int, default=10)
     parser.add_argument("--output_path", type=Path, default='./model_weights.pt')
+    parser.add_argument("--silent_tqdm", action='store_true')
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    train_loader = Factory.get_data_loader(Path(args.train_pth), args.batch_size, flip_prob = 0.5, num_workers=args.num_workers)
-    val_loader = Factory.get_data_loader(Path(args.val_pth), args.batch_size, flip_prob = 0.5, num_workers=args.num_workers, train=False)
+    train_loader = Factory.get_data_loader(Path(args.train_pth), args.batch_size, flip_prob = args.inversion_pr, num_workers=args.num_workers)
+    val_loader = Factory.get_data_loader(Path(args.val_pth), args.batch_size, flip_prob = args.inversion_pr, num_workers=args.num_workers, train=False)
     print(len(train_loader.dataset.classes))
     model = Factory.get_model(n_classes=len(train_loader.dataset.classes))
     model.to(device)
@@ -33,7 +35,7 @@ def main():
     writer = Factory.get_writer(args.log_dir)
     criterion = Factory.get_criterion()
 
-    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes))
+    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes), silent_tqdm=args.silent_tqdm)
     trainer.train()
 
     torch.save(model.state_dict(), args.output_path)

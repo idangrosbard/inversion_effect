@@ -40,7 +40,7 @@ def low_rank_approx_dist(w: torch.Tensor, rank: int) -> float:
     return spectral_dist
 
 
-def low_rank_approx_error(w: torch.Tensor) -> OrderedDict[str, List[int | float]]:
+def low_rank_approx_weight(w: torch.Tensor) -> OrderedDict[str, List[int | float]]:
     """
     Low rank approximation of the matrix.
     """
@@ -66,28 +66,6 @@ def low_rank_approx_error(w: torch.Tensor) -> OrderedDict[str, List[int | float]
         
     return spectral_dist
 
-def low_rank_approx_spectral_norm(w: torch.Tensor) -> OrderedDict[str, List[int | float]]:
-    """
-    Low rank approximation of the matrix.
-    """
-    spectral_dist = {'rank': [], 'spectral_dist': []}
-    if len(w.shape) > 2:
-            w = w.reshape(w.shape[0], -1)
-    
-    # for i in tqdm(range(min(w.shape)), desc='Rank...'):
-    # Perform SVD
-    # spectral_dist_r = low_rank_approx_dist(w, i)
-    _, s, _ = torch.linalg.svd(w)
-    # Low rank approximation
-    s = torch.abs(s)
-    s = torch.sort(s, descending=True).values
-    # s = s
-
-    spectral_dist['rank'].extend(range(min(w.shape)))
-    spectral_dist['spectral_dist'].extend(s.tolist())
-    
-    return spectral_dist
-
 def low_rank_approx_trend(w: OrderedDict[str, torch.Tensor]) -> OrderedDict[str, List[float | str | int]]:
     """
     Low rank approximation of the matrix.
@@ -100,7 +78,7 @@ def low_rank_approx_trend(w: OrderedDict[str, torch.Tensor]) -> OrderedDict[str,
         if len(w[key].shape) == 1:
             continue
         # Perform SVD
-        w_spectral_dist = low_rank_approx_error(w[key])
+        w_spectral_dist = low_rank_approx_weight(w[key])
         spectral_dist['layer'].extend([key] * len(w_spectral_dist['spectral_dist']))
         spectral_dist['spectral_dist'].extend(w_spectral_dist['spectral_dist'])
         spectral_dist['rank'].extend(w_spectral_dist['rank'])
@@ -111,16 +89,6 @@ def plot_spectral_dist(all_spectral_dist: pd.DataFrame) -> go.Figure:
     """
     Plot the spectral distance.
     """
-    import numpy as np
-    base = np.array([20,20,20])
-    target = np.array([220, 0, 0])
-    n_layers = all_spectral_dist['layer'].nunique()
-    color_map = [base + (target-base)*i/n_layers for i in range(n_layers)]
-    color_map = [f'rgb({int(color[0])},{int(color[1])},{int(color[2])})' for color in color_map]
-    fig = px.line(all_spectral_dist, x='rank', y='spectral_dist', color='layer', title='Spectral Distance Trend', color_discrete_sequence=color_map)
-    fig.update_layout(
-        xaxis_title="Approximation Rank",
-        yaxis_title="Approximation Error",
-        template='plotly_white'
-    )
+    fig = px.line(all_spectral_dist, x='rank', y='spectral_dist', color='layer', title='Spectral Distance Trend')
     return fig
+

@@ -22,6 +22,7 @@ class Trainer(object):
         self.writer = kwargs.get("writer", None)
         self.model = kwargs.get("model", None)
         self.eval_freq = kwargs.get("eval_freq", None)
+        self.silent_tqdm = kwargs.get("silent_tqdm", False)
 
         self.upright_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None)).to(self.device)
         self.inverted_acc = Accuracy(task="multiclass", num_classes=kwargs.get("num_classes", None)).to(self.device)
@@ -45,8 +46,16 @@ class Trainer(object):
             self.optimizer.step()
             self.scheduler.step()
             self.writer.add_scalar("train/lr", self.optimizer.param_groups[0]["lr"], self.total_steps)
-        batch_up_acc = self.upright_acc(y_hat[(1 - is_inverted) == 1, :], y[(1 - is_inverted) == 1])
-        batch_inv_acc = self.inverted_acc(y_hat[(is_inverted == 1), :], y[is_inverted == 1])
+        
+        if sum(is_inverted) > 0:
+            batch_inv_acc = self.inverted_acc(y_hat[(is_inverted == 1), :], y[is_inverted == 1])
+        else:
+            batch_inv_acc = torch.tensor(0.0).to(self.device)
+        if sum(1 - is_inverted) > 0:
+            batch_up_acc = self.upright_acc(y_hat[(1 - is_inverted) == 1, :], y[(1 - is_inverted) == 1])
+        else:
+            batch_up_acc = torch.tensor(0.0).to(self.device)
+        
         batch_acc = self.acc(y_hat, y)
 
         # named tuple
@@ -94,7 +103,7 @@ class Trainer(object):
             self.model.eval()
             loader = self.val_loader
 
-        for x, y, is_inverted in tqdm(loader):
+        for x, y, is_inverted in tqdm(loader, disable=self.silent_tqdm):
             
             n = x.size(0)
             n_upright = torch.sum(1 - is_inverted).item()
@@ -108,7 +117,7 @@ class Trainer(object):
 
     def train(self):
         # Train loop
-        for epoch in tqdm(range(self.num_epochs)):
+        for epoch in tqdm(range(self.num_epochs), disable=self.silent_tqdm):
             # train:
             print(f"Train epoch: {epoch}")
             self.model.train()
