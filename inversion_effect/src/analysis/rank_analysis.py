@@ -66,13 +66,28 @@ def low_rank_approx_error(w: torch.Tensor) -> OrderedDict[str, List[int | float]
         
     return spectral_dist
 
+
+def effective_rank(w: torch.Tensor) -> OrderedDict[str, List[int | float]]:
+    """
+    Effective rank of the matrix.
+    """
+    # Perform SVD
+    _, s, _ = torch.linalg.svd(w)
+    # Effective rank (The Low-Rank Simplicity Bias in Deep Networks: https://arxiv.org/pdf/2103.10427)
+    s = s
+    distribution = s / s.sum()
+    entropy = -torch.sum(distribution * torch.log(distribution))
+
+    return {'effective_rank': [entropy]}
+
+
 def low_rank_approx_spectral_norm(w: torch.Tensor) -> OrderedDict[str, List[int | float]]:
     """
     Low rank approximation of the matrix.
     """
     spectral_dist = {'rank': [], 'spectral_dist': []}
     if len(w.shape) > 2:
-            w = w.reshape(w.shape[0], -1)
+        w = w.reshape(w.shape[0], -1)
     
     # for i in tqdm(range(min(w.shape)), desc='Rank...'):
     # Perform SVD
