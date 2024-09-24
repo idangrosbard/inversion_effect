@@ -42,7 +42,7 @@ class BaseTrainer(object):
     
     @staticmethod
     def _filter_type(t: Tensor, type: Tensor, filter_type: SampleType) -> Tensor | None:
-        t[type == filter_type.value, :]
+        t = t[type == filter_type.value]
         return t
     
     @staticmethod
@@ -57,7 +57,7 @@ class BaseTrainer(object):
         return sum_loss
         
 
-    def _model_batch(self, batch: Iterable[Tensor], sample_type: SampleType) -> BaseOut:
+    def _model_batch(self, batch: Iterable[Tensor], sample_type: Tensor) -> Tuple[Dict[SampleType, BaseOut], Tensor]:
         raise NotImplementedError
 
 
@@ -72,20 +72,13 @@ class BaseTrainer(object):
             self.optimizer.zero_grad()
         for i in range(len(batch)):
             batch[i] = batch[i].to(self.device)
+        sample_type = sample_type.to(self.device)
         
-        all_outputs = {}
-        for sample_type in SampleType:
-            curr_batch = BaseTrainer._filter_batch_type(batch, sample_type, sample_type)
-
-            # Skip if there are no samples of this type
-            if curr_batch[0].size()[0] > 0:
-                out = self._model_batch(curr_batch, sample_type)
-                all_outputs[sample_type] = out
-
-        total_loss = self._total_loss(all_outputs)
+        all_outputs, loss = self._model_batch(batch, sample_type)
+        
         
         if train:
-            total_loss.backward()
+            loss.backward()
             self.optimizer.step()
             self.scheduler.step()
             self.writer.add_scalar("train/lr", self.optimizer.param_groups[0]["lr"], self.total_steps)

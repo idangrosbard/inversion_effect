@@ -2,8 +2,7 @@ from torch import Tensor
 from ..datasets import SampleType
 
 class BaseOut(object):
-    def __init__(self, loss: Tensor, n: int, type: SampleType | int):
-        self.loss = loss
+    def __init__(self, n: int, type: SampleType | int):
         self.n = n
         if isinstance(type, int):
             type = SampleType(type)

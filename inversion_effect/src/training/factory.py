@@ -9,7 +9,7 @@ from typing import Dict
 import numpy as np
 from .datasets.inversion_dataset import InvertedClassificationDataset
 from .datasets import SampleType
-from .loggers import BaseLogger, ClassificationLogger
+from .loggers import BaseLogger, ClassificationLogger, LossLogger
 
 
 
@@ -107,6 +107,7 @@ class Factory(object):
         if training_type == 'classification':
             for key in [SampleType.CLASSIFY_UPRIGHT, SampleType.CLASSIFY_INVERTED]:
                 loggers[key] = ClassificationLogger(writer, key, num_classes, device)
+            loggers[SampleType.CLASSIFY_BOTH] = LossLogger(writer, SampleType.CLASSIFY_BOTH, device)
             return loggers
         else:
             raise NotImplementedError
