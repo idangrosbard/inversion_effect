@@ -8,8 +8,8 @@ from typing import Tuple, Dict, Iterable
 from collections import namedtuple
 from torchmetrics import Accuracy, MeanMetric
 from tqdm import tqdm
-from datasets import SampleType
 from .outputs import BaseOut
+from .datasets import SampleType
 
 
 
@@ -63,7 +63,8 @@ class BaseTrainer(object):
 
     def _log_batch_metrics(self, train: bool, batch_outputs: Dict[SampleType, BaseOut]):
         for key, out in batch_outputs.items():
-            self.type_metrics[key].log_batch(out, train, self.total_steps)
+            if key in self.type_metrics:
+                self.type_metrics[key].log_batch(out, train, self.total_steps)
 
 
     def _batch(self, batch: Iterable[Tensor], sample_type: Tensor, train: bool) -> Dict[SampleType, BaseOut]:
@@ -75,8 +76,11 @@ class BaseTrainer(object):
         all_outputs = {}
         for sample_type in SampleType:
             curr_batch = BaseTrainer._filter_batch_type(batch, sample_type, sample_type)
-            out = BaseTrainer._model_batch(curr_batch, sample_type)
-            all_outputs[sample_type] = out
+
+            # Skip if there are no samples of this type
+            if curr_batch[0].size()[0] > 0:
+                out = self._model_batch(curr_batch, sample_type)
+                all_outputs[sample_type] = out
 
         total_loss = self._total_loss(all_outputs)
         

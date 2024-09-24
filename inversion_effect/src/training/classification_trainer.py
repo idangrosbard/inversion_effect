@@ -11,7 +11,7 @@ class ClassificationTrainer(BaseTrainer):
     
 
     def _model_batch(self, batch: Iterable[Tensor], sample_type: SampleType) -> BaseOut:
-        x, y = batch
+        x, y = batch[0], batch[1]
         y_hat = self.model(x)
 
         loss = self.criterion(y_hat, y)

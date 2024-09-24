@@ -1,6 +1,6 @@
 from .base_out import BaseOut
 from torch import Tensor
-from datasets import SampleType
+from ..datasets import SampleType
 
 
 class ClassificationOut(BaseOut):

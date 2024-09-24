@@ -1,13 +1,14 @@
 from torch import Tensor
-from ..outputs import BaseOut
+import torch
 from torchmetrics import MetricCollection, MeanMetric
 from torch.utils.tensorboard import SummaryWriter
-from datasets import SampleType
+from ..outputs import BaseOut
+from ..datasets import SampleType
 
 
 class BaseLogger(object):
-    def __init__(self, writer: SummaryWriter, type: SampleType | int):
-        self.epoch_loss = MeanMetric()
+    def __init__(self, writer: SummaryWriter, type: SampleType | int, device: torch.device):
+        self.epoch_loss = MeanMetric().to(device)
         self.writer = writer
         if isinstance(type, int):
             type = SampleType(type)

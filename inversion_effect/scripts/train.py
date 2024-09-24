@@ -2,7 +2,7 @@ import sys
 import os
 import torch
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.training import Factory, Trainer
+from src.training import Factory, ClassificationTrainer #Trainer, 
 
 
 from pathlib import Path
@@ -36,8 +36,11 @@ def main():
     scheduler = Factory.get_scheduler(optimizer, args.num_epochs, train_loader)
     writer = Factory.get_writer(args.log_dir)
     criterion = Factory.get_criterion()
+    type_metrics = Factory.get_loggers('classification', writer, len(train_loader.dataset.classes), device)
 
-    trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes), silent_tqdm=args.silent_tqdm)
+    # trainer = Trainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes), silent_tqdm=args.silent_tqdm, type_metrics=loggers)
+
+    trainer = ClassificationTrainer(model=model, optimizer=optimizer, scheduler=scheduler, criterion=criterion, writer=writer, train_loader=train_loader, num_epochs=args.num_epochs, val_loader=val_loader, device=device, eval_freq=args.eval_freq, num_classes=len(train_loader.dataset.classes), silent_tqdm=args.silent_tqdm, type_metrics=type_metrics)
     trainer.train()
 
     torch.save(model.state_dict(), args.output_path)
